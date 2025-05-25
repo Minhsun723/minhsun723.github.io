@@ -90,6 +90,13 @@ if (langToggleBtn && langMenu && langSwitcher) {
     }
   });
 
+// 修正桌面版地球圖示點擊會跳到頂部的問題
+if (langToggleBtn) {
+  langToggleBtn.addEventListener('click', function(event) {
+    event.preventDefault(); // 阻止 <a href="#"> 導致跳回頁首
+  });
+}
+
   // 鍵盤聚焦時顯示選單
   langToggleBtn.addEventListener('focus', function() {
     langMenu.classList.add('show');
