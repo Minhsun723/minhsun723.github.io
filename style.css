@@ -27,7 +27,7 @@ header {
   z-index: 1000;
   background-color: transparent;
   padding: 15px 50px;
-  transition: background-color 0.4s ease, box-shadow 0.4s ease;
+  transition: background-color 0.4s ease, box-shadow 0.4s ease, opacity 0.3s ease;
 }
 
 header.scrolled {
@@ -38,7 +38,9 @@ header.scrolled {
 
 /* 當選單開啟時，隱藏整個 Header */
 header.menu-open {
-  visibility: hidden;
+  opacity: 0;
+  pointer-events: none; /* 避免選單開啟時 header 被點擊 */
+  transition: opacity 0.3s ease;
 }
 
 header nav {
@@ -214,6 +216,9 @@ header.scrolled .mobile-nav-buttons .menu-toggle-btn {
 
 .mobile-main-nav li {
   margin: 15px 0;
+  /* 為動畫設定初始狀態 */
+  opacity: 0;
+  transform: translateY(20px);
 }
 
 .mobile-main-nav a {
@@ -537,4 +542,38 @@ header.scrolled .language-toggle-btn {
 .language-menu-mobile li a.active {
   color: #e60012;
   background-color: rgba(0, 0, 0, 0.04);
+}
+
+@keyframes menuItemFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 2. 當選單面板啟用時，將動畫應用到選單項目上 */
+.mobile-menu-panel.active .mobile-main-nav li {
+  /* "animation" 屬性：指定動畫名稱、持續時間、速度曲線和結束時的狀態 */
+  animation: menuItemFadeInUp 0.4s ease-out forwards;
+}
+
+/* 3. 使用 :nth-child 為每個項目設定不同的動畫延遲，創造逐一出現的效果 */
+.mobile-menu-panel.active .mobile-main-nav li:nth-child(1) {
+  animation-delay: 0.20s;
+}
+.mobile-menu-panel.active .mobile-main-nav li:nth-child(2) {
+  animation-delay: 0.25s;
+}
+.mobile-menu-panel.active .mobile-main-nav li:nth-child(3) {
+  animation-delay: 0.30s;
+}
+.mobile-menu-panel.active .mobile-main-nav li:nth-child(4) {
+  animation-delay: 0.35s;
+}
+.mobile-menu-panel.active .mobile-main-nav li:nth-child(5) {
+  animation-delay: 0.40s;
 }
