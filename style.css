@@ -314,15 +314,34 @@ header.scrolled .mobile-nav-buttons .menu-toggle-btn {
   display: flex;
   gap: 25px;
   overflow-x: auto;
-  padding: 10px; /* To prevent shadow clipping */
+  padding-bottom: 20px;
   margin: 0 -10px;
-  min-height: 280px; /* Give empty container some height */
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 10px;
+  min-height: 280px;
+  user-select: none; /* 新增：防止拖曳時選取到文字或圖片 */
+  cursor: grab;      /* 新增：顯示可抓取的手形游標 */
 }
 
+/* 新增：正在拖曳時，顯示抓緊的手形游標 */
+.showcase-container.active {
+  cursor: grabbing;
+}
+
+
+/* 【更新】更細的漸層捲動軸樣式 */
 .showcase-container::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
+    height: 4px; /* 將高度從 8px 改為 4px，讓捲動軸更細 */
+}
+
+.showcase-container::-webkit-scrollbar-track {
+    background: #e9e9e9;
+}
+
+.showcase-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(to right, #4c3c9a, #d43f99); 
+    border-radius: 2px; /* 配合高度調整圓角 */
 }
 
 .showcase-item {
@@ -354,12 +373,39 @@ header.scrolled .mobile-nav-buttons .menu-toggle-btn {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  pointer-events: none;
 }
 
 .card-title {
   font-size: 0.9rem;
   font-weight: 500;
   line-height: 1.4;
+}
+
+.showcase-wrapper {
+  background-color: #f0f1f6;
+  padding: 40px 0;
+}
+
+.showcase-section {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 0 50px;
+  margin-bottom: 40px;
+  /* 【新增】動畫的初始狀態 */
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+/* 【新增】當元素可見時，要套用的動畫結束狀態 */
+.showcase-section.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.showcase-wrapper > .showcase-section:last-of-type {
+    margin-bottom: 0;
 }
 
 /* --- Footer --- */
