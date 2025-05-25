@@ -160,3 +160,191 @@ if (pageTopBtn) {
         });
     });
 }
+
+// --- 【新增】內文區塊滾動進入動畫 ---
+document.addEventListener('DOMContentLoaded', () => {
+  // 選取所有需要動畫的區塊
+  const sections = document.querySelectorAll('.showcase-section');
+
+  // 如果頁面上有這些區塊才執行
+  if (sections.length > 0) {
+    // 建立一個觀察器
+    const observer = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        // 當目標元素進入可視區域時
+        if (entry.isIntersecting) {
+          // 為該元素加上 'is-visible' class 來觸發動畫
+          entry.target.classList.add('is-visible');
+          // 動畫觸發後就停止觀察，避免重複觸發
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      root: null, // 使用瀏覽器視窗作為根
+      rootMargin: '0px',
+      threshold: 0.1 // 當元素的可視性達到 10% 時觸發
+    });
+
+    // 讓觀察器開始觀察每一個區塊
+    sections.forEach(section => {
+      observer.observe(section);
+    });
+  }
+});
+
+// --- 【新增】讓圖片區塊可以用滑鼠拖曳捲動 ---
+document.addEventListener('DOMContentLoaded', () => {
+  // 選取頁面上所有的 showcase-container
+  const sliders = document.querySelectorAll('.showcase-container');
+
+  sliders.forEach(slider => {
+    // --- 狀態變數 ---
+    let isDown = false;
+    let hasDragged = false;
+    let startX;
+    let scrollLeft;
+    
+    // --- 動畫與物理效果變數 ---
+    let velocity = 0;
+    let animationFrameId;
+    let targetScrollLeft;
+
+    // --- 用於精準計算速度的追蹤器 ---
+    let velocityTracker = [];
+
+    // --- 事件處理函式 ---
+
+    // 1. 滑鼠按下
+    const handleMouseDown = (e) => {
+      // 檢查點擊是否在捲動軸上
+      if (e.offsetY > slider.clientHeight) { return; }
+
+      isDown = true;
+      hasDragged = false;
+      slider.classList.add('active');
+      
+      // 停止所有正在進行的動畫
+      cancelAnimationFrame(animationFrameId);
+      
+      // 記錄初始狀態
+      startX = e.pageX - slider.offsetLeft;
+      scrollLeft = slider.scrollLeft;
+      targetScrollLeft = scrollLeft;
+
+      // 重設並初始化速度追蹤器
+      velocity = 0;
+      velocityTracker = [];
+      velocityTracker.push({ time: Date.now(), x: e.pageX });
+
+      // 綁定全域事件
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      
+      // 立即啟動拖曳動畫迴圈
+      animationFrameId = requestAnimationFrame(dragLoop);
+    };
+
+    // 2. 滑鼠移動
+    const handleMouseMove = (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+
+      const currentX = e.pageX;
+      const walk = currentX - startX;
+      targetScrollLeft = scrollLeft - walk;
+
+      // 持續記錄軌跡以計算速度
+      const now = Date.now();
+      velocityTracker.push({ time: now, x: currentX });
+      // 只保留最近 100ms 的紀錄
+      while (now - velocityTracker[0].time > 100) {
+        velocityTracker.shift();
+      }
+
+      if (Math.abs(walk) > 5) {
+        hasDragged = true;
+      }
+    };
+
+    // 3. 滑鼠放開
+    const handleMouseUp = () => {
+      if (!isDown) return;
+      isDown = false;
+      slider.classList.remove('active');
+
+      // 解除全域事件
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      
+      // 停止拖曳動畫
+      cancelAnimationFrame(animationFrameId);
+
+      // --- 根據軌跡紀錄，計算出更穩定的平均速度 ---
+      const now = Date.now();
+      // 清理超時的紀錄
+      while (velocityTracker.length > 0 && now - velocityTracker[0].time > 100) {
+        velocityTracker.shift();
+      }
+
+      if (hasDragged && velocityTracker.length >= 2) {
+        const firstPoint = velocityTracker[0];
+        const lastPoint = velocityTracker[velocityTracker.length - 1];
+        const deltaX = lastPoint.x - firstPoint.x;
+        const deltaTime = lastPoint.time - firstPoint.time;
+        
+        if (deltaTime > 10) { // 確保時間間隔有效
+          velocity = (deltaX / deltaTime) * (1000 / 60); // 轉換為 影格/秒 的速度單位
+        } else {
+          velocity = 0;
+        }
+      } else {
+        velocity = 0;
+      }
+      
+      // 設定速度上限，防止極端跳動
+      const MAX_VELOCITY = 120;
+      if (velocity > MAX_VELOCITY) velocity = MAX_VELOCITY;
+      if (velocity < -MAX_VELOCITY) velocity = -MAX_VELOCITY;
+      
+      // 只有在速度足夠時才啟動慣性動畫
+      if (Math.abs(velocity) > 1) {
+        animationFrameId = requestAnimationFrame(momentumLoop);
+      }
+    };
+
+    // --- 動畫迴圈 ---
+
+    // A. 拖曳中的平滑迴圈
+    const dragLoop = () => {
+      if (!isDown) return;
+      const current = slider.scrollLeft;
+      const target = targetScrollLeft;
+      // 使用線性插值平滑滾動，減少抖動
+      slider.scrollLeft += (target - current) * 0.2;
+      animationFrameId = requestAnimationFrame(dragLoop);
+    };
+
+    // B. 放開後的慣性迴圈
+    const momentumLoop = () => {
+      slider.scrollLeft += velocity;
+      velocity *= 0.95; // 摩擦力
+      if (Math.abs(velocity) > 0.5) {
+        animationFrameId = requestAnimationFrame(momentumLoop);
+      }
+    };
+    
+    // --- 初始事件綁定 ---
+    slider.addEventListener('mousedown', handleMouseDown);
+
+    // --- 連結點擊保護 ---
+    const links = slider.querySelectorAll('.showcase-item');
+    links.forEach(link => {
+      link.addEventListener('dragstart', (e) => e.preventDefault());
+      link.addEventListener('click', (e) => {
+        if (hasDragged) {
+          e.preventDefault();
+        }
+      });
+    });
+  });
+});
