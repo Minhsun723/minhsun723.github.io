@@ -110,6 +110,7 @@ if (langToggleBtn) {
   });
 }
 
+
 // --- 手機版彈出式語言選單功能 (新版邏輯) ---
 const mobileLangToggle = document.querySelector('.language-toggle-btn-mobile');
 const mobileLangMenu = document.querySelector('.language-menu-mobile');
@@ -134,4 +135,28 @@ if (mobileLangToggle && mobileLangMenu) {
       mobileLangToggle.setAttribute('aria-expanded', 'false');
     }
   });
+}
+
+
+// --- Page Top Button ---
+const pageTopBtn = document.getElementById('pageTopBtn');
+
+if (pageTopBtn) {
+    // 當頁面捲動時，決定按鈕是否顯示
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 400) { // 向下捲動超過 400px 時顯示
+            pageTopBtn.classList.add('show');
+        } else {
+            pageTopBtn.classList.remove('show');
+        }
+    });
+
+    // 點擊按鈕後，平滑地捲動至頁面頂端
+    pageTopBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
 }
