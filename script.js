@@ -20,7 +20,12 @@ const body = document.querySelector('body');
 // 定義開啟選單的動作
 function openMenu() {
   mobileMenuPanel.classList.add('active');
-  header.classList.add('menu-open'); // 讓 header 隱藏
+
+  // 延遲讓 header 淡出，避免選單開啟前閃爍
+  setTimeout(() => {
+    header.classList.add('menu-open');
+  }, 100); // 與 CSS 動畫時間一致
+
   body.classList.add('no-scroll'); // 鎖定背景滾動
 }
 
