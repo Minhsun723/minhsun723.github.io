@@ -348,3 +348,65 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
+
+// --- 【更新】Hero Section 自動輪播與手動控制 ---
+document.addEventListener('DOMContentLoaded', () => {
+  const slides = document.querySelectorAll('.hero-slide');
+  const prevBtn = document.getElementById('hero-prev');
+  const nextBtn = document.getElementById('hero-next');
+
+  // 如果只有一張或沒有圖片，則不執行輪播並隱藏按鈕
+  if (slides.length <= 1) {
+    if (prevBtn) prevBtn.style.display = 'none';
+    if (nextBtn) nextBtn.style.display = 'none';
+    return;
+  }
+
+  let currentSlide = 0;
+  let slideInterval; // 用來存放計時器ID
+
+  // 顯示指定索引的幻燈片
+  const showSlide = (index) => {
+    // 移除所有幻燈片的 active class
+    slides.forEach(slide => slide.classList.remove('active'));
+    // 為目標幻燈片加上 active class
+    slides[index].classList.add('active');
+  };
+
+  // 切換到下一張
+  const nextSlide = () => {
+    currentSlide = (currentSlide + 1) % slides.length;
+    showSlide(currentSlide);
+  };
+
+  // 切換到上一張
+  const prevSlide = () => {
+    currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+    showSlide(currentSlide);
+  };
+
+  // 啟動或重設自動輪播
+  const startSlideshow = () => {
+    clearInterval(slideInterval); // 清除已存在的計時器
+    slideInterval = setInterval(nextSlide, 5000); // 每5秒切換一次
+  };
+
+  // 為「下一張」按鈕綁定事件
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      nextSlide();
+      startSlideshow(); // 點擊後重設計時器
+    });
+  }
+
+  // 為「上一張」按鈕綁定事件
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      prevSlide();
+      startSlideshow(); // 點擊後重設計時器
+    });
+  }
+
+  // 初始啟動輪播
+  startSlideshow();
+});
