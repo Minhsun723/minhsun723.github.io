@@ -921,3 +921,6 @@ header.scrolled .language-toggle-btn {
 .mobile-menu-panel.active .mobile-main-nav li:nth-child(5) {
   animation-delay: 0.40s;
 }
+.mobile-menu-panel.active .mobile-main-nav li:nth-child(6) {
+  animation-delay: 0.45s;
+}
