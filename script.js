@@ -349,64 +349,124 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// --- 【更新】Hero Section 自動輪播與手動控制 ---
+// --- Hero Section 自動輪播與手動控制 (支援圖片與影片) ---
 document.addEventListener('DOMContentLoaded', () => {
-  const slides = document.querySelectorAll('.hero-slide');
-  const prevBtn = document.getElementById('hero-prev');
-  const nextBtn = document.getElementById('hero-next');
+    const slides = document.querySelectorAll('.hero .hero-slide'); 
+    const prevBtn = document.getElementById('hero-prev');
+    const nextBtn = document.getElementById('hero-next');
+    const defaultSlideDuration = 7000; // 圖片或循環影片的預設輪播時間 (7秒)
 
-  // 如果只有一張或沒有圖片，則不執行輪播並隱藏按鈕
-  if (slides.length <= 1) {
-    if (prevBtn) prevBtn.style.display = 'none';
-    if (nextBtn) nextBtn.style.display = 'none';
-    return;
-  }
+    if (!slides.length) {
+        if (prevBtn) prevBtn.style.display = 'none';
+        if (nextBtn) nextBtn.style.display = 'none';
+        return;
+    }
+    if (slides.length <= 1) { 
+        if (prevBtn) prevBtn.style.display = 'none';
+        if (nextBtn) nextBtn.style.display = 'none';
+        
+        slides[0].classList.add('active'); // Ensure first slide is active
+        const firstSlideVideo = slides[0].querySelector('video');
+        if (firstSlideVideo) {
+            firstSlideVideo.play().catch(error => console.warn("Single video slide autoplay failed:", error));
+        }
+        return;
+    }
 
-  let currentSlide = 0;
-  let slideInterval; // 用來存放計時器ID
+    let currentSlide = 0;
+    let slideInterval;
 
-  // 顯示指定索引的幻燈片
-  const showSlide = (index) => {
-    // 移除所有幻燈片的 active class
-    slides.forEach(slide => slide.classList.remove('active'));
-    // 為目標幻燈片加上 active class
-    slides[index].classList.add('active');
-  };
+    function showSlide(index) {
+        slides.forEach((slide, i) => {
+            slide.classList.remove('active');
+            const video = slide.querySelector('video');
+            if (video) {
+                video.pause();
+                if (i !== index) { 
+                    video.currentTime = 0;
+                }
+            }
+        });
 
-  // 切換到下一張
-  const nextSlide = () => {
-    currentSlide = (currentSlide + 1) % slides.length;
-    showSlide(currentSlide);
-  };
+        slides[index].classList.add('active');
+        const currentVideo = slides[index].querySelector('video');
 
-  // 切換到上一張
-  const prevSlide = () => {
-    currentSlide = (currentSlide - 1 + slides.length) % slides.length;
-    showSlide(currentSlide);
-  };
+        if (currentVideo) {
+            // Ensure video is reset if it's the one being activated
+            if (currentVideo.currentTime > 0 && !currentVideo.loop && currentVideo.paused) {
+                currentVideo.currentTime = 0;
+            }
+            currentVideo.play().catch(error => {
+                console.warn("Video autoplay failed for slide " + index + ":", error);
+            });
+        }
+        resetSlideshowTimer();
+    }
 
-  // 啟動或重設自動輪播
-  const startSlideshow = () => {
-    clearInterval(slideInterval); // 清除已存在的計時器
-    slideInterval = setInterval(nextSlide, 5000); // 每5秒切換一次
-  };
+    function nextSlideFn() { // Renamed to avoid conflict with global nextSlide if any
+        currentSlide = (currentSlide + 1) % slides.length;
+        showSlide(currentSlide);
+    }
 
-  // 為「下一張」按鈕綁定事件
-  if (nextBtn) {
-    nextBtn.addEventListener('click', () => {
-      nextSlide();
-      startSlideshow(); // 點擊後重設計時器
-    });
-  }
+    function prevSlideFn() { // Renamed
+        currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+        showSlide(currentSlide);
+    }
 
-  // 為「上一張」按鈕綁定事件
-  if (prevBtn) {
-    prevBtn.addEventListener('click', () => {
-      prevSlide();
-      startSlideshow(); // 點擊後重設計時器
-    });
-  }
+    function resetSlideshowTimer() {
+        clearInterval(slideInterval); 
+        clearTimeout(slideInterval); // Also clear timeout if onended was used
 
-  // 初始啟動輪播
-  startSlideshow();
+        const activeSlide = slides[currentSlide];
+        const video = activeSlide.querySelector('video');
+
+        if (video) {
+            video.onended = null; // Clear previous onended handler
+
+            if (!video.loop) {
+                video.onended = () => {
+                     // Add a small delay to prevent immediate re-trigger if video is very short or ends quickly
+                    setTimeout(() => {
+                        // Check if the video is still the active one and actually ended (not paused manually)
+                        if (slides[currentSlide] === activeSlide && video.ended) {
+                           nextSlideFn();
+                        }
+                    }, 50); // 50ms delay
+                };
+                // Fallback timer in case onended doesn't fire or video is stuck
+                slideInterval = setTimeout(nextSlideFn, Math.max(defaultSlideDuration, (video.duration * 1000) + 500 || defaultSlideDuration + 500));
+
+            } else {
+                slideInterval = setTimeout(nextSlideFn, defaultSlideDuration);
+            }
+        } else {
+            slideInterval = setTimeout(nextSlideFn, defaultSlideDuration);
+        }
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            const currentVideo = slides[currentSlide].querySelector('video');
+            if (currentVideo && !currentVideo.loop) {
+                currentVideo.onended = null;
+            }
+            clearTimeout(slideInterval); // Clear any pending timeout
+            clearInterval(slideInterval);
+            nextSlideFn();
+        });
+    }
+
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            const currentVideo = slides[currentSlide].querySelector('video');
+            if (currentVideo && !currentVideo.loop) {
+                currentVideo.onended = null;
+            }
+            clearTimeout(slideInterval); // Clear any pending timeout
+            clearInterval(slideInterval);
+            prevSlideFn();
+        });
+    }
+    
+    showSlide(currentSlide); 
 });
